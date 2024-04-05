@@ -22,7 +22,7 @@ async def get_students(country: str = None, age: int = None) -> list:
         filters['address.country'] = country
     if age:
         filters['age'] = {"$gte": age}
-    students = db.students.find(filters)
+    students = db.students.find(filters,{"_id": 0, "name": 1, "age": 1})
     return [student for student in students]
 
 async def get_student_by_id(student_id: str) -> Student:

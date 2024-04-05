@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from typing import List
+from typing import List, Dict
 
 from app.models import Student
 from app.controllers import (
@@ -22,13 +22,14 @@ async def create_student_route(student: Student) -> dict:
     return {"id": student_id}
 
 
-@router.get("/students", response_model=List[Student])
+@router.get("/students", response_model=Dict[str, List[dict]])
 async def list_students_route(country: str = None, age: int = None) -> List[Student]:
     """
     List students with optional filters.
     """
     students = await get_students(country, age)
-    return students
+    # return students
+    return {"data" : students}
 
 
 @router.get("/students/{student_id}", response_model=Student)
