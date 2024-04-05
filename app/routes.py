@@ -46,6 +46,7 @@ async def update_student_route(student_id: str, student: Student) -> None:
     Update a student's properties.
     """
     await update_student(student_id, student)
+    return {}
 
 
 @router.delete("/students/{student_id}", response_model=dict)
@@ -54,4 +55,4 @@ async def delete_student_route(student_id: str) -> dict:
     Delete a student by ID.
     """
     await delete_student(student_id)
-    return {"message": "Student deleted successfully"}
+    return {}

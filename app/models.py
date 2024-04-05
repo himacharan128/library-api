@@ -10,3 +10,7 @@ class Student(BaseModel):
     name: str
     age: int
     address: Address
+
+class StudentResponse(BaseModel):
+    name: str
+    age: int

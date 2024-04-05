@@ -1,49 +1,54 @@
+from fastapi import HTTPException
+from bson import ObjectId
 from typing import List
 
-from app.models import Student
 from app.database import db
+from app.models import Student
 
 
 async def create_student(student: Student) -> str:
     """
     Create a new student record.
     """
-    result = await db.students.insert_one(student.dict())
+    result = db.students.insert_one(student.dict())
     return str(result.inserted_id)
 
-
-async def get_students(country: str = None, age: int = None) -> List[Student]:
+async def get_students(country: str = None, age: int = None) -> list:
     """
-    List students with optional filters.
+    Get a list of students based on optional filters.
     """
-    query = {}
+    filters = {}
     if country:
-        query["address.country"] = country
-    if age is not None:
-        query["age"] = {"$gte": age}
-
-    students = await db.students.find(query).to_list(length=None)
-    return [Student(**student) for student in students]
-
+        filters['address.country'] = country
+    if age:
+        filters['age'] = {"$gte": age}
+    students = db.students.find(filters)
+    return [student for student in students]
 
 async def get_student_by_id(student_id: str) -> Student:
     """
-    Fetch a student by ID.
+    Get a student by ID.
     """
-    student = await db.students.find_one({"_id": student_id})
+    student = db.students.find_one({"_id": ObjectId(student_id)})
     if student:
         return Student(**student)
+    else:
+        raise HTTPException(status_code=404, detail="Student not found")
 
 
 async def update_student(student_id: str, student: Student) -> None:
     """
     Update a student's properties.
     """
-    await db.students.update_one({"_id": student_id}, {"$set": student.dict()})
+    result = db.students.replace_one({"_id": ObjectId(student_id)}, student.dict())
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Student not found")
 
 
 async def delete_student(student_id: str) -> None:
     """
     Delete a student by ID.
     """
-    await db.students.delete_one({"_id": student_id})
+    result = db.students.delete_one({"_id": ObjectId(student_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Student not found")
