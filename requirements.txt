@@ -1,4 +1,3 @@
 fastapi
 pymongo==3.12.0
-bson==0.5.10
 uvicorn[standard]
