@@ -1,67 +1,49 @@
-from fastapi import HTTPException
-from bson import ObjectId
+from typing import List
 
-from app.database import db
 from app.models import Student
+from app.database import db
 
 
 async def create_student(student: Student) -> str:
     """
     Create a new student record.
     """
-    inserted_student = db.students.insert_one(student.dict())
-    student_id = str(inserted_student.inserted_id)
-    student_data = student.dict()
-    student_data["id"] = student_id
-    return student_data
+    result = await db.students.insert_one(student.dict())
+    return str(result.inserted_id)
 
 
-async def get_students(country: str = None, age: int = None) -> list:
+async def get_students(country: str = None, age: int = None) -> List[Student]:
     """
-    Get a list of students based on optional filters.
+    List students with optional filters.
     """
-    filters = {}
+    query = {}
     if country:
-        filters['address.country'] = country
-    if age:
-        filters['age'] = {"$gte": age}
+        query["address.country"] = country
+    if age is not None:
+        query["age"] = {"$gte": age}
 
-    students = db.students.find(filters)
-    student_list = []
-    for student in students:
-        student_data = student
-        student_data["id"] = str(student["_id"])
-        student_list.append(student_data)
-    return [Student(**student) for student in student_list]
+    students = await db.students.find(query).to_list(length=None)
+    return [Student(**student) for student in students]
 
-async def get_student_by_id(student_id: str) -> dict:
+
+async def get_student_by_id(student_id: str) -> Student:
     """
-    Get a student by ID.
+    Fetch a student by ID.
     """
-    student = db.students.find_one({"_id": ObjectId(student_id)})
+    student = await db.students.find_one({"_id": student_id})
     if student:
-        student_data = student
-        student_data["_id"] = str(student_data["_id"])
-        student_data["id"] = student_data.pop("_id")
-        return student_data
-    else:
-        raise HTTPException(status_code=404, detail="Student not found")
-
+        return Student(**student)
 
 
 async def update_student(student_id: str, student: Student) -> None:
     """
     Update a student's properties.
     """
-    result = db.students.replace_one({"_id": ObjectId(student_id)}, student.dict())
-    if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Student not found")
+    await db.students.update_one({"_id": student_id}, {"$set": student.dict()})
 
 
 async def delete_student(student_id: str) -> None:
     """
     Delete a student by ID.
     """
-    result = db.students.delete_one({"_id": ObjectId(student_id)})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Student not found")
+    await db.students.delete_one({"_id": student_id})
