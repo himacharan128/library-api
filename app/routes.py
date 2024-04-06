@@ -12,7 +12,7 @@ from app.controllers import (
 
 router = APIRouter()
 
-
+@router.post("/",status_code=200)
 @router.post("/students", status_code=201, response_model=dict)
 async def create_student_route(student: Student) -> dict:
     """
